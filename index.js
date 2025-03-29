@@ -18,13 +18,13 @@ app.use(express.json()); // Middleware JSON harus sebelum endpoint
 // });
 
 
-database.connect((err) => {
-  if (err) {
-    console.error('Error connecting to MySQL database:', err);
-    return;
-  }
-  console.log('Connected to MySQL database');
-});
+// database.connect((err) => {
+//   if (err) {
+//     console.error('Error connecting to MySQL database:', err);
+//     return;
+//   }
+//   console.log('Connected to MySQL database');
+// });
 
 // Endpoint Login
 app.post('/login', (req, res) => {
