@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
+const path = require('path'); // Tambahkan path untuk file statis
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -25,7 +26,7 @@ database.connect((err) => {
 
 // Endpoint Login
 app.post('/login', (req, res) => {
-  console.log('Data Login Diterima:', req.body); // Log data yang diterima
+  console.log('Data Login Diterima:', req.body);
   const { username, password } = req.body;
 
   const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
@@ -43,7 +44,7 @@ app.post('/login', (req, res) => {
 
 // Endpoint untuk mengirim data form
 app.post('/submit', (req, res) => {
-  console.log('Data Form Diterima:', req.body); // Log data form yang diterima
+  console.log('Data Form Diterima:', req.body);
   const { name, message } = req.body;
 
   const query = 'INSERT INTO form (name, message) VALUES (?, ?)';
@@ -57,11 +58,6 @@ app.post('/submit', (req, res) => {
   });
 });
 
-// Server
-app.listen(port, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
-});
-
 // Sajikan file statis dari folder 'public'
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -70,6 +66,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Server
 app.listen(PORT, () => {
   console.log(`Server berjalan di http://localhost:${PORT}`);
 });
