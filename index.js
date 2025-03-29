@@ -1,62 +1,73 @@
 const express = require('express');
 const mysql = require('mysql');
 const cors = require('cors');
-const path = require('path'); // Tambahkan path untuk file statis
+const path = require('path');
+
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json()); // Middleware JSON harus sebelum endpoint
+app.use(express.json());
 
-// Koneksi ke Database
-// const database = mysql.createConnection({
-//   host: process.env.DB_HOST || 'localhost', // Gunakan variabel lingkungan
-//   user: process.env.DB_USER || 'root',      // Sesuaikan dengan username MySQL Anda
-//   password: process.env.DB_PASS || '',      // Sesuaikan dengan password MySQL Anda
-//   database: process.env.DB_NAME || 'web1',  // Sesuaikan dengan nama database Anda
-//   port: process.env.DB_PORT || 4000         // Gunakan variabel lingkungan untuk port jika berbeda
-// });
+// Konfigurasi Koneksi Database
+const database = mysql.createPool({
+  connectionLimit: 10, // Maksimal koneksi bersamaan
+  host: process.env.DB_HOST || 'bakniahhyhgtejshkimi-mysql.services.clever-cloud.com',
+  user: process.env.DB_USERNAME || 'u3rce4uszo3pnhor',
+  password: process.env.DB_PASSWORD || 'JxYXB8gIdDRBkxjT1L',
+  database: process.env.DB_NAME || 'bakniahhyhgtejshkimi',
+  port: process.env.DB_PORT || 3306,
+  multipleStatements: true // Dukung multiple query jika diperlukan
+});
 
-
-// database.connect((err) => {
-//   if (err) {
-//     console.error('Error connecting to MySQL database:', err);
-//     return;
-//   }
-//   console.log('Connected to MySQL database');
-// });
+// Cek koneksi database
+database.getConnection((err, connection) => {
+  if (err) {
+    console.error('❌ Gagal terhubung ke MySQL:', err.message);
+  } else {
+    console.log('✅ Berhasil terhubung ke MySQL di Clever Cloud!');
+    connection.release(); // Bebaskan koneksi setelah dicek
+  }
+});
 
 // Endpoint Login
 app.post('/login', (req, res) => {
-  console.log('Data Login Diterima:', req.body);
   const { username, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username dan password harus diisi' });
+  }
 
   const query = 'SELECT * FROM users WHERE username = ? AND password = ?';
   database.query(query, [username, password], (err, results) => {
     if (err) {
       console.error('Database error:', err);
-      res.status(500).json({ error: 'Database error' });
-    } else if (results.length > 0) {
-      res.json({ success: true });
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (results.length > 0) {
+      res.json({ success: true, message: 'Login berhasil' });
     } else {
       res.status(401).json({ error: 'Username atau password salah' });
     }
   });
 });
 
-// Endpoint untuk mengirim data form
+// Endpoint untuk menyimpan data form
 app.post('/submit', (req, res) => {
-  console.log('Data Form Diterima:', req.body);
   const { name, message } = req.body;
+
+  if (!name || !message) {
+    return res.status(400).json({ error: 'Nama dan pesan harus diisi' });
+  }
 
   const query = 'INSERT INTO form (name, message) VALUES (?, ?)';
   database.query(query, [name, message], (err, results) => {
     if (err) {
       console.error('Database error:', err);
-      res.status(500).json({ error: 'Database error' });
-    } else {
-      res.json({ success: true, message: 'Data berhasil disimpan' });
+      return res.status(500).json({ error: 'Database error' });
     }
+    res.json({ success: true, message: 'Data berhasil disimpan' });
   });
 });
 
@@ -68,7 +79,7 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Server
+// Jalankan server
 app.listen(port, () => {
-  console.log(`Server berjalan di http://localhost:${port}`);
+  console.log(`🚀 Server berjalan di http://localhost:${port}`);
 });
