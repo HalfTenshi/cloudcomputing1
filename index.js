@@ -1,38 +1,43 @@
 const express = require('express');
-const mysql = require('mysql2/promise'); // Gunakan mysql2 dengan Promise
+const mysql = require('mysql2/promise');
 const cors = require('cors');
 const path = require('path');
-const bcrypt = require('bcrypt'); // Untuk hash password
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken'); // JWT untuk autentikasi
+require('dotenv').config();
 
 const app = express();
 const port = process.env.PORT || 3000;
+const SECRET_KEY = process.env.JWT_SECRET || 'secret123'; // Kunci JWT
 
 app.use(cors());
 app.use(express.json());
 
-// Konfigurasi Koneksi Database
+// Koneksi Database
 const pool = mysql.createPool({
+  host: process.env.MYSQL_ADDON_HOST,
+  user: process.env.MYSQL_ADDON_USER,
+  password: process.env.MYSQL_ADDON_PASSWORD,
+  database: process.env.MYSQL_ADDON_DB,
+  port: process.env.MYSQL_ADDON_PORT || 3306,
+  ssl: { rejectUnauthorized: false },
+  waitForConnections: true,
   connectionLimit: 10,
-  host: process.env.DB_HOST || 'bakniahhyhgtejshkimi-mysql.services.clever-cloud.com',
-  user: process.env.DB_USERNAME || 'u3rce4uszo3pnhor',
-  password: process.env.DB_PASSWORD || 'JxYXB8gIdDRBkxjT1L',
-  database: process.env.DB_NAME || 'bakniahhyhgtejshkimi',
-  port: process.env.DB_PORT || 3306,
-  ssl: { rejectUnauthorized: false } // Clever Cloud pakai SSL
+  queueLimit: 0
 });
 
 // Cek koneksi ke database
 (async () => {
   try {
     const connection = await pool.getConnection();
-    console.log('✅ Berhasil terhubung ke MySQL di Clever Cloud!');
+    console.log('✅ Berhasil terhubung ke MySQL!');
     connection.release();
   } catch (err) {
     console.error('❌ Gagal terhubung ke MySQL:', err.message);
   }
 })();
 
-// Endpoint Login
+// Endpoint Login dengan JWT
 app.post('/login', async (req, res) => {
   const { username, password } = req.body;
 
@@ -42,27 +47,38 @@ app.post('/login', async (req, res) => {
 
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE username = ?', [username]);
-
     if (rows.length === 0) {
       return res.status(401).json({ error: 'Username atau password salah' });
     }
 
     const user = rows[0];
     const passwordMatch = await bcrypt.compare(password, user.password);
-
     if (!passwordMatch) {
       return res.status(401).json({ error: 'Username atau password salah' });
     }
 
-    res.json({ success: true, message: 'Login berhasil' });
+    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY, { expiresIn: '2h' });
+    res.json({ success: true, message: 'Login berhasil', token });
   } catch (err) {
     console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: 'Terjadi kesalahan pada server' });
   }
 });
 
-// Endpoint untuk menyimpan data form
-app.post('/submit', async (req, res) => {
+// Middleware untuk verifikasi JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).json({ error: 'Akses ditolak, token tidak ditemukan' });
+
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) return res.status(401).json({ error: 'Token tidak valid' });
+    req.user = decoded;
+    next();
+  });
+};
+
+// Endpoint menyimpan data form (hanya untuk user yang login)
+app.post('/submit', verifyToken, async (req, res) => {
   const { name, message } = req.body;
 
   if (!name || !message) {
@@ -70,11 +86,11 @@ app.post('/submit', async (req, res) => {
   }
 
   try {
-    const [result] = await pool.query('INSERT INTO form (name, message) VALUES (?, ?)', [name, message]);
+    await pool.query('INSERT INTO form (name, message) VALUES (?, ?)', [name, message]);
     res.json({ success: true, message: 'Data berhasil disimpan' });
   } catch (err) {
     console.error('Database error:', err);
-    res.status(500).json({ error: 'Database error' });
+    res.status(500).json({ error: 'Terjadi kesalahan pada server' });
   }
 });
 
