@@ -10,11 +10,13 @@ app.use(express.json()); // Middleware JSON harus sebelum endpoint
 
 // Koneksi ke Database
 const database = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-  database: 'web1'
+  host: process.env.DB_HOST || 'localhost', // Gunakan variabel lingkungan
+  user: process.env.DB_USER || 'root',      // Sesuaikan dengan username MySQL Anda
+  password: process.env.DB_PASS || '',      // Sesuaikan dengan password MySQL Anda
+  database: process.env.DB_NAME || 'web1',  // Sesuaikan dengan nama database Anda
+  port: process.env.DB_PORT || 4000         // Gunakan variabel lingkungan untuk port jika berbeda
 });
+
 
 database.connect((err) => {
   if (err) {
