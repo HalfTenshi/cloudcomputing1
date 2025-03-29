@@ -3,19 +3,19 @@ const mysql = require('mysql');
 const cors = require('cors');
 const path = require('path'); // Tambahkan path untuk file statis
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json()); // Middleware JSON harus sebelum endpoint
 
 // Koneksi ke Database
-const database = mysql.createConnection({
-  host: process.env.DB_HOST || 'localhost', // Gunakan variabel lingkungan
-  user: process.env.DB_USER || 'root',      // Sesuaikan dengan username MySQL Anda
-  password: process.env.DB_PASS || '',      // Sesuaikan dengan password MySQL Anda
-  database: process.env.DB_NAME || 'web1',  // Sesuaikan dengan nama database Anda
-  port: process.env.DB_PORT || 4000         // Gunakan variabel lingkungan untuk port jika berbeda
-});
+// const database = mysql.createConnection({
+//   host: process.env.DB_HOST || 'localhost', // Gunakan variabel lingkungan
+//   user: process.env.DB_USER || 'root',      // Sesuaikan dengan username MySQL Anda
+//   password: process.env.DB_PASS || '',      // Sesuaikan dengan password MySQL Anda
+//   database: process.env.DB_NAME || 'web1',  // Sesuaikan dengan nama database Anda
+//   port: process.env.DB_PORT || 4000         // Gunakan variabel lingkungan untuk port jika berbeda
+// });
 
 
 database.connect((err) => {
