@@ -3,7 +3,7 @@ const mysql = require('mysql');
 const cors = require('cors');
 const path = require('path'); // Tambahkan path untuk file statis
 const app = express();
-const PORT = process.env.PORT || 4000;
+const port = process.env.PORT || 4000;
 
 app.use(cors());
 app.use(express.json()); // Middleware JSON harus sebelum endpoint
@@ -69,6 +69,6 @@ app.get('*', (req, res) => {
 });
 
 // Server
-app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
+app.listen(port, () => {
+  console.log(`Server berjalan di http://localhost:${port}`);
 });
